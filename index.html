@@ -16,7 +16,7 @@
     </style>
 </head>
 <body>
-    <h2>Horner 參數與累積雨量查詢</h2>
+    <h2>Horner 參數與累積雨量查詢（對數皮爾遜三型）</h2>
     <label>選擇流域：</label>
     <select id="basinSelect"></select>
     <label>選擇測站：</label>
@@ -83,28 +83,37 @@
             const recur = recurSel.value;
             const duration = durationSel.value;
 
-            const row = rawData.find(r => r.basin === basin && r.NAME === station && r['重期期距(年)'] == recur);
+            const filtered = rawData.filter(r => r.basin === basin && r.NAME === station);
+            const recurSet = Array.from(new Set(filtered.map(r => r['重期期距(年)']))).sort((a,b)=>a-b);
 
-            if (row) {
-                let rows = dropdownData.durations.map(d => {
-                    const accum = parseFloat(row[d + '_accum']).toFixed(1);
-                    const cls = d === duration ? 'highlight' : '';
-                    return `<tr class="${cls}"><td>${d}</td><td>${accum}</td></tr>`;
-                }).join('');
+            let table = '<table><thead><tr><th>重現期\\延時</th>' + dropdownData.durations.map(d => `<th>${d}</th>`).join('') + '</tr></thead><tbody>';
 
-                document.getElementById('result').innerHTML = `
-                    <h3>${station} (${basin}) - ${recur} 年重現期</h3>
-                    <p><b>ID：</b> ${row.ID}</p>
-                    <table>
-                        <thead><tr><th>延時</th><th>累積降雨量 (mm)</th></tr></thead>
-                        <tbody>${rows}</tbody>
-                    </table>
-                `;
+            recurSet.forEach(rp => {
+                const row = filtered.find(r => r['重期期距(年)'] == rp);
+                table += '<tr>' +
+                    `<td>${rp}</td>` +
+                    dropdownData.durations.map(d => {
+                        const val = row ? parseFloat(row[d + '_accum']).toFixed(1) : '-';
+                        const cls = (rp == recur && d === duration) ? 'highlight' : '';
+                        return `<td class="${cls}">${val}</td>`;
+                    }).join('') + '</tr>';
+            });
 
-                map.setView([row.WGS84_Y, row.WGS84_X], 10);
-                marker.setLatLng([row.WGS84_Y, row.WGS84_X]).bindPopup(station).openPopup();
-            } else {
-                document.getElementById('result').innerText = '查無資料';
+            table += '</tbody></table>';
+
+            const rowA = filtered.find(r => r['重期期距(年)'] == recur);
+            const abc = rowA ? `a = ${rowA.a}, b = ${rowA.b}, c = ${rowA.c}` : '查無 Horner 參數';
+
+            document.getElementById('result').innerHTML = `
+                <h3>${station} (${basin})</h3>
+                <p><b>ID：</b> ${filtered[0]?.ID || '未知'}</p>
+                <p><b>Horner 對數皮爾遜三型參數：</b> ${abc}</p>
+                ${table}
+            `;
+
+            if (filtered.length > 0) {
+                map.setView([filtered[0].WGS84_Y, filtered[0].WGS84_X], 10);
+                marker.setLatLng([filtered[0].WGS84_Y, filtered[0].WGS84_X]).bindPopup(station).openPopup();
             }
         }
 
