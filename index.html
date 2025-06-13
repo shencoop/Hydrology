@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <title>雨量站 Horner 分析成果查詢系統</title>
+    <title>Horner 查詢系統</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
@@ -16,7 +16,7 @@
     </style>
 </head>
 <body>
-    <h2>雨量站 Horner 參數與對應累積雨量查詢</h2>
+    <h2>Horner 參數與累積雨量查詢</h2>
     <label>選擇流域：</label>
     <select id="basinSelect"></select>
     <label>選擇測站：</label>
@@ -87,17 +87,16 @@
 
             if (row) {
                 let rows = dropdownData.durations.map(d => {
-                    const rain = parseFloat(row[d]).toFixed(1);
                     const accum = parseFloat(row[d + '_accum']).toFixed(1);
                     const cls = d === duration ? 'highlight' : '';
-                    return `<tr class="${cls}"><td>${d}</td><td>${rain}</td><td>${accum}</td></tr>`;
+                    return `<tr class="${cls}"><td>${d}</td><td>${accum}</td></tr>`;
                 }).join('');
 
                 document.getElementById('result').innerHTML = `
                     <h3>${station} (${basin}) - ${recur} 年重現期</h3>
                     <p><b>ID：</b> ${row.ID}</p>
                     <table>
-                        <thead><tr><th>延時</th><th>降雨量 (mm)</th><th>累積量 (mm)</th></tr></thead>
+                        <thead><tr><th>延時</th><th>累積降雨量 (mm)</th></tr></thead>
                         <tbody>${rows}</tbody>
                     </table>
                 `;
